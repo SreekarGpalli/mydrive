@@ -1,0 +1,1131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f3f6fb">
+<title>MyDrive</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M9 25h15a6 6 0 0 0 .8-11.95A8 8 0 0 0 9.3 12.1 6.5 6.5 0 0 0 9 25z' fill='%232563eb'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#f3f6fb;--surface:#fff;--surface2:#eef2f8;--text:#1b1f27;--muted:#5f6673;--faint:#8a919d;--line:#e3e7ee;
+  --accent:#2563eb;--accent-ink:#fff;--accent-soft:#dbe6fd;--sel:#d6e3fc;--hover:#eef1f6;--danger:#c4372d;--ok:#1e8e4f;
+  --shadow:0 1px 3px rgba(20,30,50,.12),0 8px 24px rgba(20,30,50,.10);--radius:16px;
+  --c-folder:#5f7895;--c-image:#e0533d;--c-video:#d93a50;--c-audio:#8b5cf6;--c-pdf:#d93025;--c-document:#2f6fe4;--c-spreadsheet:#1e9455;--c-presentation:#e8890c;--c-archive:#6b7280;--c-code:#374151;--c-file:#7a8494;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#13161b;--surface:#1b1f26;--surface2:#232831;--text:#e7eaf0;--muted:#a4abb7;--faint:#7b8390;--line:#2c323c;
+  --accent:#6b9cff;--accent-ink:#0d1526;--accent-soft:#22314f;--sel:#26385c;--hover:#252a33;--danger:#f2786d;--ok:#4cc38a;
+  --shadow:0 1px 3px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.45);
+  --c-folder:#9fb3cc;--c-file:#9aa3b2;--c-code:#b8c0cc;--c-archive:#a3aab5}}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif;overflow:hidden}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+svg.i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.hidden{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+/* ---------- login ---------- */
+#login{position:fixed;inset:0;display:grid;place-items:center;padding:16px;background:var(--bg)}
+#login form{background:var(--surface);border-radius:24px;padding:36px 32px;width:100%;max-width:380px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:14px}
+#login .brand{display:flex;align-items:center;gap:10px;font-size:24px;font-weight:600;margin-bottom:4px}
+#login p{margin:0 0 6px;color:var(--muted)}
+.field{padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);outline:none;width:100%}
+.field:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.btn{border:0;border-radius:999px;padding:9px 18px;font-weight:600;display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+.btn.primary{background:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.text{background:transparent;color:var(--accent)}
+.btn.text:hover{background:var(--accent-soft)}
+.btn.danger{background:var(--danger);color:#fff}
+.btn.outline{background:transparent;border:1px solid var(--line);color:var(--text)}
+.btn.outline:hover{background:var(--hover)}
+.err{color:var(--danger);min-height:20px;font-size:13px}
+/* ---------- shell ---------- */
+#app{display:grid;grid-template-columns:256px minmax(0,1fr);grid-template-rows:64px 1fr;height:100vh;height:100dvh}
+.topbar{grid-column:1/-1;min-width:0;display:flex;align-items:center;gap:12px;padding:8px 16px 8px 12px}
+.brand{display:flex;align-items:center;gap:10px;font-size:21px;font-weight:600;padding:0 6px;min-width:228px;cursor:pointer;user-select:none}
+.brand svg{width:34px;height:34px}
+.iconbtn{width:40px;height:40px;border-radius:50%;border:0;background:transparent;display:grid;place-items:center;color:var(--muted);flex:none}
+.iconbtn:hover{background:var(--hover);color:var(--text)}
+.iconbtn.on{background:var(--accent-soft);color:var(--accent)}
+.search{flex:1;max-width:720px;display:flex;align-items:center;gap:8px;background:var(--surface2);border-radius:999px;padding:0 8px 0 14px;height:48px;transition:background .15s,box-shadow .15s}
+.search:focus-within{background:var(--surface);box-shadow:var(--shadow)}
+.search input{flex:1;border:0;background:transparent;outline:none;font-size:16px;min-width:0}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:4px}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:600;border:0;margin-left:6px}
+#menuBtn{display:none}
+.side{padding:4px 12px 16px 12px;display:flex;flex-direction:column;gap:2px;overflow:auto}
+.newbtn{display:inline-flex;align-items:center;gap:12px;padding:16px 22px 16px 18px;border-radius:16px;border:0;background:var(--surface);box-shadow:var(--shadow);font-weight:600;font-size:15px;margin:4px 0 14px;align-self:flex-start}
+.newbtn:hover{background:var(--accent-soft)}
+.nav{display:flex;align-items:center;gap:14px;padding:0 16px 0 14px;height:36px;border-radius:999px;color:var(--text);text-decoration:none;cursor:pointer;border:0;background:transparent;text-align:left;width:100%}
+.nav:hover{background:var(--hover)}
+.nav.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.nav.drop{outline:2px solid var(--accent)}
+.side hr{border:0;border-top:1px solid var(--line);margin:10px 4px}
+.meter{padding:6px 16px}
+.meter .track{height:4px;border-radius:99px;background:var(--line);overflow:hidden;margin:6px 0}
+.meter .fill{height:100%;background:var(--accent);width:0}
+.meter small{color:var(--muted)}
+.meter.warn .fill{background:var(--danger)}
+.main{background:var(--surface);border-radius:var(--radius);margin:0 16px 16px 0;display:flex;overflow:hidden;min-width:0;min-height:0}
+.content{flex:1;display:flex;flex-direction:column;min-width:0}
+.head{display:flex;align-items:center;gap:8px 8px;padding:12px 16px 8px 20px;min-height:64px;flex-wrap:wrap}
+.crumbs{display:flex;align-items:center;flex-wrap:wrap;font-size:22px;min-width:0;flex:1}
+.crumbs button{border:0;background:transparent;padding:4px 10px;border-radius:999px;font-size:inherit;color:var(--text);max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.crumbs button:hover,.crumbs button.drop{background:var(--hover)}
+.crumbs .sep{color:var(--faint);display:grid}
+.crumbs .last{font-weight:400}
+.tools{display:flex;align-items:center;gap:4px}
+.selbar{display:flex;align-items:center;gap:2px;background:var(--surface2);border-radius:999px;padding:2px 6px;flex:1 1 100%;min-height:44px;flex-wrap:wrap}
+.selbar .count{font-weight:600;margin:0 10px 0 2px}
+.subrow{flex:1 1 100%;min-height:44px;display:flex;align-items:center;padding:0 12px;font-size:13px}
+.scroll{flex:1;overflow:auto;padding:0 16px 24px 20px;position:relative;outline:none}
+.banner{background:var(--surface2);border-radius:12px;padding:10px 16px;display:flex;align-items:center;gap:12px;margin:0 0 12px;color:var(--muted)}
+.banner .btn{margin-left:auto}
+.section{font-weight:600;color:var(--text);margin:14px 4px 10px;font-size:14px}
+/* grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:14px}
+.ftile{display:flex;align-items:center;gap:12px;height:52px;padding:0 6px 0 14px;border-radius:12px;background:var(--surface2);user-select:none;cursor:default;position:relative}
+.ftile:hover{background:var(--hover);filter:brightness(.98)}
+.ftile .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.card{border-radius:12px;background:var(--surface2);padding:0 0 0;user-select:none;display:flex;flex-direction:column;overflow:hidden;cursor:default}
+.card:hover{filter:brightness(.98)}
+.card .top{display:flex;align-items:center;gap:10px;padding:8px 4px 8px 12px}
+.card .top .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.card .thumb{margin:0 8px 8px;height:150px;border-radius:8px;background:var(--surface);display:grid;place-items:center;overflow:hidden}
+.card .thumb img{width:100%;height:100%;object-fit:cover}
+.card .thumb .big{width:64px;height:64px}
+.sel-item{background:var(--sel)!important}
+.drop-target{outline:2px solid var(--accent);outline-offset:-2px}
+.mini{width:32px;height:32px;border-radius:50%;border:0;background:transparent;display:grid;place-items:center;color:var(--muted);flex:none}
+.mini:hover{background:rgba(127,127,127,.18);color:var(--text)}
+.star-badge{color:var(--muted);display:grid}
+.star-badge svg{width:16px;height:16px}
+/* list */
+.table{width:100%;border-collapse:collapse}
+.table th{font-weight:500;color:var(--muted);text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface);z-index:1;white-space:nowrap;user-select:none}
+.table th.sortable{cursor:pointer}
+.table th.sortable:hover{color:var(--text)}
+.table td{padding:0 8px;height:48px;border-bottom:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:0}
+.table tr.row{cursor:default;user-select:none}
+.table tr.row:hover td{background:var(--hover)}
+.table tr.sel-item td{background:var(--sel)}
+.namecell{display:flex;align-items:center;gap:14px;min-width:0}
+.namecell .nm{overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.rowacts{display:flex;justify-content:flex-end;gap:2px;visibility:hidden}
+tr.row:hover .rowacts,tr.sel-item .rowacts{visibility:visible}
+.c-name{width:auto}.c-loc{width:22%}.c-date{width:190px}.c-size{width:110px}.c-act{width:176px}
+.muted{color:var(--muted)}
+/* empty */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:70px 20px;color:var(--muted);gap:10px}
+.empty svg.big{width:120px;height:120px;stroke-width:1.2;color:var(--line)}
+.empty h3{margin:6px 0 0;color:var(--text);font-weight:500;font-size:20px}
+/* details */
+.details{width:340px;border-left:1px solid var(--line);display:flex;flex-direction:column;overflow:auto;flex:none}
+.details .dh{display:flex;align-items:center;gap:12px;padding:16px 12px 8px 20px;font-size:17px}
+.details .dh .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.details .pv{margin:8px 20px;height:180px;border-radius:12px;background:var(--surface2);display:grid;place-items:center;overflow:hidden}
+.details .pv img{width:100%;height:100%;object-fit:contain}
+.details dl{margin:8px 20px 20px;display:grid;grid-template-columns:110px 1fr;gap:10px 8px;font-size:13px}
+.details dt{color:var(--muted)}
+.details dd{margin:0;word-break:break-word}
+/* menus */
+.menu{position:fixed;z-index:60;background:var(--surface);border-radius:8px;box-shadow:var(--shadow);padding:6px 0;min-width:230px;max-height:80vh;overflow:auto}
+.menu button{display:flex;align-items:center;gap:14px;width:100%;border:0;background:transparent;padding:8px 18px;text-align:left}
+.menu button:hover{background:var(--hover)}
+.menu button.danger{color:var(--danger)}
+.menu hr{border:0;border-top:1px solid var(--line);margin:6px 0}
+.menu .kbd{margin-left:auto;color:var(--faint);font-size:12px}
+/* dialogs */
+.backdrop{position:fixed;inset:0;background:rgba(10,14,20,.45);display:grid;place-items:center;z-index:70;padding:16px}
+.dlg{background:var(--surface);border-radius:24px;box-shadow:var(--shadow);width:100%;max-width:460px;padding:22px 24px 16px;display:flex;flex-direction:column;gap:14px;max-height:90vh}
+.dlg h2{margin:0;font-size:22px;font-weight:400}
+.dlg .body{overflow:auto;display:flex;flex-direction:column;gap:12px}
+.dlg .acts{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.linkbox{display:flex;gap:8px;align-items:center;background:var(--surface2);border-radius:12px;padding:6px 6px 6px 12px}
+.linkbox input{flex:1;border:0;background:transparent;outline:none;min-width:0;font-size:13px}
+.picker{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.picker .ph{display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--surface2);font-weight:500;min-height:44px}
+.picker .pl{height:260px;overflow:auto}
+.picker .pi{display:flex;align-items:center;gap:12px;padding:8px 14px;cursor:pointer}
+.picker .pi:hover{background:var(--hover)}
+.picker .pi.dis{opacity:.45;cursor:not-allowed}
+.code{font-family:Consolas,ui-monospace,monospace;background:var(--surface2);padding:2px 6px;border-radius:6px;font-size:13px}
+ol.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+/* uploads */
+#up{position:fixed;right:24px;bottom:0;width:380px;max-width:calc(100vw - 24px);background:var(--surface);border-radius:14px 14px 0 0;box-shadow:var(--shadow);z-index:50;overflow:hidden}
+#up .uh{display:flex;align-items:center;gap:6px;padding:10px 8px 10px 18px;background:var(--surface2);font-weight:600}
+#up .uh span{flex:1}
+#up .sub{padding:8px 18px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--line);display:flex;justify-content:space-between}
+#up .ul{max-height:280px;overflow:auto}
+.ui{display:flex;align-items:center;gap:12px;padding:8px 10px 8px 18px}
+.ui .nm{flex:1;min-width:0}
+.ui .nm div{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ui .bar{height:3px;background:var(--line);border-radius:99px;margin-top:5px;overflow:hidden}
+.ui .bar i{display:block;height:100%;width:0;background:var(--accent)}
+.ui .st{width:32px;display:grid;place-items:center}
+.ui.ok .st{color:var(--ok)}.ui.bad .st{color:var(--danger)}.ui.bad .bar i{background:var(--danger)}
+.ui .why{font-size:12px;color:var(--danger)}
+/* toast */
+#toast{position:fixed;left:24px;bottom:24px;background:#2b2f36;color:#f1f3f6;border-radius:8px;padding:12px 8px 12px 18px;display:flex;align-items:center;gap:16px;box-shadow:var(--shadow);z-index:80;transform:translateY(calc(100% + 40px));transition:transform .2s;max-width:calc(100vw - 48px)}
+#toast.show{transform:none}
+#toast button{border:0;background:transparent;color:#9dbbff;font-weight:600;padding:6px 10px;border-radius:6px}
+#toast button:hover{background:rgba(255,255,255,.08)}
+/* drop overlay */
+#dropzone{position:fixed;inset:0;z-index:65;pointer-events:none;display:flex;align-items:flex-end;justify-content:center;padding:30px;background:rgba(37,99,235,.08);outline:3px solid var(--accent);outline-offset:-3px}
+#dropzone div{background:var(--accent);color:var(--accent-ink);padding:14px 22px;border-radius:999px;font-weight:600;box-shadow:var(--shadow);display:flex;gap:10px;align-items:center}
+/* viewer */
+#viewer{position:fixed;inset:0;background:rgba(8,10,14,.92);z-index:75;display:flex;flex-direction:column;color:#f2f4f7}
+#viewer .vh{display:flex;align-items:center;gap:10px;padding:10px 12px;height:64px}
+#viewer .vh .nm{flex:1;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:10px}
+#viewer .iconbtn{color:#e6e9ee}
+#viewer .iconbtn:hover{background:rgba(255,255,255,.12)}
+#viewer .vb{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;padding:0 64px 24px;position:relative}
+#viewer .vb img,#viewer .vb video{max-width:100%;max-height:100%;object-fit:contain;border-radius:4px}
+#viewer .vb iframe{width:min(1000px,100%);height:100%;border:0;background:#fff;border-radius:4px}
+#viewer .vb pre{width:min(1000px,100%);height:100%;overflow:auto;background:#1c2027;color:#e6e9ee;padding:20px;border-radius:8px;margin:0;font:13px/1.5 Consolas,ui-monospace,monospace;white-space:pre-wrap;word-break:break-word}
+#viewer .nav-arrow{position:absolute;top:50%;transform:translateY(-50%);width:48px;height:48px;border-radius:50%;border:0;background:rgba(255,255,255,.1);color:#fff;display:grid;place-items:center}
+#viewer .nav-arrow:hover{background:rgba(255,255,255,.2)}
+#viewer .noprev{background:#262a31;padding:36px 40px;border-radius:16px;text-align:center;display:flex;flex-direction:column;gap:14px;align-items:center}
+/* storage page */
+.stor{max-width:820px}
+.stor .big{font-size:34px;font-weight:400;margin:10px 0 2px}
+.stack{display:flex;height:12px;border-radius:99px;overflow:hidden;background:var(--line);margin:14px 0}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;margin-bottom:18px}
+.legend span{display:flex;align-items:center;gap:8px;color:var(--muted)}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+/* mobile */
+@media (max-width:860px){
+  #app{grid-template-columns:minmax(0,1fr);grid-template-rows:60px 1fr}
+  .topbar{padding:8px 10px;gap:6px;min-width:0}.search{min-width:0}.top-right #helpBtn{display:none}
+  .tools .btn.outline{padding:6px 10px!important}
+  #menuBtn{display:grid}
+  .brand{min-width:0}.brand span{display:none}
+  .side{position:fixed;left:0;top:0;bottom:0;width:280px;background:var(--bg);z-index:66;box-shadow:var(--shadow);transform:translateX(-105%);transition:transform .2s;padding-top:16px}
+  .side.open{transform:none}
+  .main{margin:0;border-radius:16px 16px 0 0}
+  .details{position:fixed;inset:auto 0 0 0;width:auto;max-height:70vh;background:var(--surface);z-index:64;border-left:0;border-radius:16px 16px 0 0;box-shadow:var(--shadow)}
+  .c-loc,.c-date,.c-act{display:none}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  .card .thumb{height:118px}
+  .head{padding:8px 10px 6px 12px}.scroll{padding:0 10px 90px 12px}
+  .crumbs{font-size:18px}
+  #fab{display:grid}
+  #up{right:0;width:100%}
+  #viewer .vb{padding:0 8px 16px}
+  #viewer .nav-arrow{display:none}
+  .search{height:42px}
+  .top-right .iconbtn.lay{display:none}
+}
+#fab{display:none;position:fixed;right:18px;bottom:22px;width:58px;height:58px;border-radius:18px;border:0;background:var(--accent-soft);color:var(--accent);box-shadow:var(--shadow);place-items:center;z-index:45}
+#scrim{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:65}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="logo" viewBox="0 0 40 40"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4f8cff"/><stop offset="1" stop-color="#1d4ed8"/></linearGradient></defs><path d="M11 31h18.5a7.5 7.5 0 0 0 1-14.93A10 10 0 0 0 11.4 14.6 8.2 8.2 0 0 0 11 31z" fill="url(#lg)"/><path d="M20 26v-9m-4 4 4-4 4 4" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r=".6"/><circle cx="4.5" cy="12" r=".6"/><circle cx="4.5" cy="18" r=".6"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5"/><circle cx="12" cy="7.8" r=".5"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-drive" viewBox="0 0 24 24"><rect x="3.5" y="6" width="17" height="12" rx="2.5"/><path d="M3.5 13h17"/><circle cx="16.5" cy="15.5" r=".6"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 4 2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 16.4l-4.8 2.5.9-5.4-3.9-3.8 5.4-.8z"/></symbol>
+  <symbol id="i-starf" viewBox="0 0 24 24"><path d="m12 4 2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 16.4l-4.8 2.5.9-5.4-3.9-3.8 5.4-.8z" fill="currentColor"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M18 8v6M15 11h6"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/><path d="M10.5 11v5M13.5 11v5"/></symbol>
+  <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7.5 18h9.5a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.3 9.3 4.4 4.4 0 0 0 7.5 18z"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11m-4.5-4.5L12 15l4.5-4.5M5 19h14"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="5.5" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/><circle cx="12" cy="18.5" r="1.3" fill="currentColor"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></symbol>
+  <symbol id="i-move" viewBox="0 0 24 24"><path d="M3.5 7.5a2 2 0 0 1 2-2h4l2 2h7a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/><path d="M9 13h6m-2.5-2.5L15 13l-2.5 2.5"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M15.5 8.5V6.5a2 2 0 0 0-2-2h-7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h2"/></symbol>
+  <symbol id="i-restore" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4.5 4.5v4h4"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-cr" viewBox="0 0 24 24"><path d="m10 6 6 6-6 6"/></symbol>
+  <symbol id="i-cl" viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></symbol>
+  <symbol id="i-cd" viewBox="0 0 24 24"><path d="m6 10 6 6 6-6"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5m-6 6 6-6 6 6"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 5v14m-6-6 6 6 6-6"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5m6-6-6 6 6 6"/></symbol>
+  <symbol id="i-open" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/></symbol>
+  <symbol id="i-fileup" viewBox="0 0 24 24"><path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"/><path d="M14 3.5V8h4.5M12 17v-6m-2.5 2.5L12 11l2.5 2.5"/></symbol>
+  <symbol id="i-folderup" viewBox="0 0 24 24"><path d="M3.5 7.5a2 2 0 0 1 2-2h4l2 2h7a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/><path d="M12 16v-5.5m-2.5 2.5L12 10.5l2.5 2.5"/></symbol>
+  <symbol id="i-newfolder" viewBox="0 0 24 24"><path d="M3.5 7.5a2 2 0 0 1 2-2h4l2 2h7a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/><path d="M12 10.5v5M9.5 13h5"/></symbol>
+  <symbol id="i-pc" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="11" rx="2"/><path d="M9 19.5h6M12 15.5v4"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="M14 4.5h4a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-4M10 16l4-4-4-4M14 12H4"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4.2l2 2.2H19a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-sortdir" viewBox="0 0 24 24"><path d="M8 5v14m-3-3 3 3 3-3M16 19V5m-3 3 3-3 3 3"/></symbol>
+  <symbol id="i-empty" viewBox="0 0 120 120"><rect x="20" y="30" width="80" height="62" rx="10"/><path d="M20 48h80M48 30l6-10h12l6 10"/><circle cx="60" cy="70" r="10"/></symbol>
+</svg>
+
+<section id="login" class="hidden">
+  <form id="loginForm" autocomplete="on">
+    <div class="brand"><svg viewBox="0 0 40 40" width="40" height="40"><use href="#logo"/></svg>MyDrive</div>
+    <p>Sign in to your personal cloud</p>
+    <input class="field" id="lu" name="username" autocomplete="username" placeholder="Username" value="sreekar" required>
+    <input class="field" id="lp" name="password" type="password" autocomplete="current-password" placeholder="Password" required>
+    <button class="btn primary" type="submit" style="justify-content:center;padding:12px">Sign in</button>
+    <div class="err" id="lerr"></div>
+  </form>
+</section>
+
+<div id="app" class="hidden">
+  <div class="topbar">
+    <button class="iconbtn" id="menuBtn" title="Menu"><svg class="i"><use href="#i-menu"/></svg></button>
+    <div class="brand" id="brand"><svg viewBox="0 0 40 40"><use href="#logo"/></svg><span>MyDrive</span></div>
+    <form class="search" id="searchForm">
+      <svg class="i"><use href="#i-search"/></svg>
+      <input id="q" type="search" placeholder="Search in Drive" autocomplete="off" aria-label="Search">
+      <button type="button" class="iconbtn hidden" id="qClear" title="Clear search"><svg class="i"><use href="#i-x"/></svg></button>
+    </form>
+    <div class="top-right">
+      <button class="iconbtn" id="helpBtn" title="Use as a drive on your PC"><svg class="i"><use href="#i-pc"/></svg></button>
+      <button class="avatar" id="avatar" title="Account">S</button>
+    </div>
+  </div>
+  <aside class="side" id="side">
+    <button class="newbtn" id="newBtn"><svg class="i"><use href="#i-plus"/></svg>New</button>
+    <button class="nav" data-view="drive"><svg class="i"><use href="#i-drive"/></svg>My Drive</button>
+    <button class="nav" data-view="recent"><svg class="i"><use href="#i-clock"/></svg>Recent</button>
+    <button class="nav" data-view="starred"><svg class="i"><use href="#i-star"/></svg>Starred</button>
+    <button class="nav" data-view="shared"><svg class="i"><use href="#i-link"/></svg>Shared links</button>
+    <button class="nav" data-view="trash"><svg class="i"><use href="#i-trash"/></svg>Trash</button>
+    <hr>
+    <button class="nav" data-view="storage"><svg class="i"><use href="#i-cloud"/></svg>Storage</button>
+    <div class="meter" id="meter"><div class="track"><div class="fill"></div></div><small id="meterText"></small></div>
+  </aside>
+  <div class="main">
+    <section class="content">
+      <div class="head" id="head"></div>
+      <div class="scroll" id="scroll" tabindex="-1"></div>
+    </section>
+    <aside class="details hidden" id="details"></aside>
+  </div>
+</div>
+
+<button id="fab" class="hidden" title="New"><svg class="i" style="width:26px;height:26px"><use href="#i-plus"/></svg></button>
+<input type="file" id="fileIn" multiple hidden>
+<input type="file" id="dirIn" webkitdirectory multiple hidden>
+<div id="up" class="hidden"><div class="uh"><span id="upTitle">Uploading</span><button class="iconbtn" id="upMin" title="Minimize"><svg class="i"><use href="#i-cd"/></svg></button><button class="iconbtn" id="upClose" title="Close"><svg class="i"><use href="#i-x"/></svg></button></div><div class="sub" id="upSub"></div><div class="ul" id="upList"></div></div>
+<div id="dropzone" class="hidden"><div><svg class="i"><use href="#i-fileup"/></svg><span id="dropText">Drop files to upload</span></div></div>
+<div id="toast"><span id="toastMsg"></span><button id="toastAct" class="hidden"></button></div>
+
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+function h(tag, attrs = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else if (k === 'class') e.className = v;
+    else if (k === 'style') e.style.cssText = v;
+    else if (k in e && k !== 'list') e[k] = v;
+    else e.setAttribute(k, v);
+  }
+  for (const c of kids.flat()) if (c != null && c !== false) e.append(c.nodeType ? c : document.createTextNode(c));
+  return e;
+}
+const NS = 'http://www.w3.org/2000/svg';
+function icon(id, cls = 'i') { const s = document.createElementNS(NS, 'svg'); s.setAttribute('class', cls); const u = document.createElementNS(NS, 'use'); u.setAttribute('href', '#' + id); s.append(u); return s; }
+
+// ---------- file-type icons ----------
+const KIND = {
+  folder: ['--c-folder', null], image: ['--c-image', 'img'], video: ['--c-video', 'play'], audio: ['--c-audio', 'note'],
+  pdf: ['--c-pdf', 'PDF'], document: ['--c-document', 'lines'], spreadsheet: ['--c-spreadsheet', 'gridx'],
+  presentation: ['--c-presentation', 'slide'], archive: ['--c-archive', 'zip'], code: ['--c-code', 'code'], file: ['--c-file', 'lines']
+};
+const KIND_LABEL = { folder: 'Folder', image: 'Image', video: 'Video', audio: 'Audio', pdf: 'PDF', document: 'Document', spreadsheet: 'Spreadsheet', presentation: 'Presentation', archive: 'Archive', code: 'Code', file: 'File' };
+function typeIcon(kind, size = 22) {
+  const [color, glyph] = KIND[kind] || KIND.file;
+  const s = document.createElementNS(NS, 'svg');
+  s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('width', size); s.setAttribute('height', size); s.style.flex = 'none';
+  s.style.color = `var(${color})`;
+  if (kind === 'folder') { s.innerHTML = '<path d="M2.5 6.5a2 2 0 0 1 2-2h4.6l2.1 2.2h8.3a2 2 0 0 1 2 2V17.5a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2z" fill="currentColor"/>'; return s; }
+  let g = '';
+  const W = 'stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"';
+  switch (glyph) {
+    case 'img': g = `<path d="M6.5 16.5 10 12.5l2.5 2.6 1.8-1.9 3.2 3.3z" fill="#fff"/><circle cx="15.5" cy="8.5" r="1.6" fill="#fff"/>`; break;
+    case 'play': g = `<path d="M10 8.2v7.6l6-3.8z" fill="#fff"/>`; break;
+    case 'note': g = `<path d="M10.5 16.5V8l6-1.5v8" ${W}/><circle cx="9" cy="16.5" r="1.6" fill="#fff"/><circle cx="15" cy="15" r="1.6" fill="#fff"/>`; break;
+    case 'PDF': g = `<text x="12" y="15.2" text-anchor="middle" font-size="7.2" font-weight="700" fill="#fff" font-family="Segoe UI,Arial,sans-serif">PDF</text>`; break;
+    case 'lines': g = `<path d="M7.5 8.5h9M7.5 12h9M7.5 15.5h6" ${W}/>`; break;
+    case 'gridx': g = `<path d="M7 8h10v8H7zM7 12h10M12 8v8" ${W}/>`; break;
+    case 'slide': g = `<rect x="7" y="8.5" width="10" height="7" rx="1" ${W}/>`; break;
+    case 'zip': g = `<path d="M12 6v2m0 2v2m0 2v2" ${W}/><rect x="10.5" y="15" width="3" height="3" rx=".6" fill="#fff"/>`; break;
+    case 'code': g = `<path d="m9.5 9-3 3 3 3M14.5 9l3 3-3 3" ${W}/>`; break;
+  }
+  s.innerHTML = `<rect x="3" y="3" width="18" height="18" rx="4" fill="currentColor"/>${g}`;
+  return s;
+}
+
+// ---------- helpers ----------
+const fmtSize = n => { if (n == null) return '—'; if (n < 1024) return n + ' bytes'; const u = ['KB', 'MB', 'GB', 'TB']; let i = -1; do { n /= 1024; i++; } while (n >= 1024 && i < 3); return (n < 10 ? n.toFixed(1) : Math.round(n)) + ' ' + u[i]; };
+function fmtDate(s, long) {
+  if (!s) return '—';
+  const d = new Date(s * 1000), now = new Date();
+  if (!long && d.toDateString() === now.toDateString()) return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  const opts = { month: 'short', day: 'numeric' };
+  if (long || d.getFullYear() !== now.getFullYear()) opts.year = 'numeric';
+  let t = d.toLocaleDateString(undefined, opts);
+  if (long) t += ', ' + d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  return t;
+}
+const joinPath = (a, b) => (a === '/' ? '' : a) + '/' + b;
+const parentOf = p => { const i = p.lastIndexOf('/'); return i <= 0 ? '/' : p.slice(0, i); };
+const nameOf = p => p.split('/').pop();
+const locLabel = p => !p || p === '/' ? 'My Drive' : nameOf(p);
+const enc = encodeURIComponent;
+const fileUrl = (p, dl) => '/api/file?path=' + enc(p) + (dl ? '&dl=1' : '');
+const thumbUrl = it => '/api/thumb?path=' + enc(it.path) + '&v=' + it.mtime + '-' + it.size;
+const isTouch = matchMedia('(hover: none)').matches;
+const store = { get(k, d) { try { return JSON.parse(localStorage.getItem('md.' + k)) ?? d; } catch { return d; } }, set(k, v) { try { localStorage.setItem('md.' + k, JSON.stringify(v)); } catch {} } };
+
+async function api(method, url, body) {
+  const r = await fetch(url, { method, headers: { 'X-MyDrive': '1', ...(body ? { 'Content-Type': 'application/json' } : {}) }, body: body ? JSON.stringify(body) : undefined });
+  if (r.status === 401 && !url.endsWith('/login')) { showLogin(); throw new Error('Please sign in'); }
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || r.statusText);
+  return j;
+}
+
+// ---------- toast ----------
+let toastTimer;
+function toast(msg, action) {
+  $('#toastMsg').textContent = msg;
+  const b = $('#toastAct');
+  if (action) { b.textContent = action.label; b.onclick = () => { $('#toast').classList.remove('show'); action.run(); }; b.classList.remove('hidden'); }
+  else b.classList.add('hidden');
+  $('#toast').classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => $('#toast').classList.remove('show'), action ? 7000 : 3500);
+}
+const oops = e => toast(e.message || String(e));
+
+// ---------- state ----------
+const S = {
+  view: 'drive', path: '/', q: '', items: [], sel: new Set(), anchor: null,
+  layout: store.get('layout', 'grid'), sort: store.get('sort', { key: 'name', dir: 1 }),
+  details: store.get('details', false), usage: { used: 0, quota: 1 }, loading: false
+};
+const keyOf = it => it.id || it.path;
+function refreshSel() {
+  document.querySelectorAll('[data-key]').forEach(e => e.classList.toggle('sel-item', S.sel.has(e.dataset.key)));
+  renderHead(); renderDetails();
+}
+const selected = () => S.items.filter(it => S.sel.has(keyOf(it)));
+
+// ---------- routing ----------
+function route() {
+  const h = decodeURIComponent(location.hash.slice(1) || '/drive');
+  const [, view, ...rest] = h.split('/');
+  const v = ['drive', 'recent', 'starred', 'shared', 'trash', 'storage', 'search'].includes(view) ? view : 'drive';
+  S.view = v; S.path = v === 'drive' ? '/' + rest.join('/') : '/'; if (S.path.length > 1 && S.path.endsWith('/')) S.path = S.path.slice(0, -1);
+  S.q = v === 'search' ? rest.join('/') : '';
+  $('#q').value = S.q; $('#qClear').classList.toggle('hidden', !S.q);
+  S.sel.clear(); S.anchor = null; S.items = []; S.userSorted = false;
+  document.querySelectorAll('.nav').forEach(n => n.classList.toggle('on', n.dataset.view === v));
+  closeSide();
+  load();
+}
+function go(view, arg = '') { const target = '#/' + view + (arg ? (arg.startsWith('/') ? arg : '/' + arg) : ''); if (location.hash === target) route(); else location.hash = target; }
+const goDir = p => go('drive', p === '/' ? '' : p);
+window.addEventListener('hashchange', route);
+
+// ---------- loading ----------
+async function load() {
+  const v = S.view;
+  const url = { drive: '/api/list?path=' + enc(S.path), recent: '/api/recent', starred: '/api/starred', shared: '/api/shares', trash: '/api/trash', search: '/api/search?q=' + enc(S.q), storage: '/api/storage' }[v];
+  S.loading = true; render();
+  try {
+    const d = await api('GET', url);
+    if (v !== S.view) return;
+    S.loading = false;
+    if (v === 'storage') { S.storage = d; S.items = []; } else S.items = d.entries;
+    if (d.usage) setUsage(d.usage);
+    render();
+  } catch (e) {
+    S.loading = false;
+    if (e.message !== 'Please sign in') { oops(e); if (v === 'drive' && S.path !== '/') goDir('/'); }
+  }
+}
+const refresh = () => load();
+
+function setUsage(u) {
+  S.usage = u;
+  const pct = Math.min(100, u.used / u.quota * 100);
+  $('#meter .fill').style.width = pct.toFixed(1) + '%';
+  $('#meter').classList.toggle('warn', pct > 90);
+  $('#meterText').textContent = `${fmtSize(u.used)} of ${fmtSize(u.quota)} used`;
+}
+
+// ---------- sorting ----------
+function sorted(items) {
+  if (['recent', 'trash', 'shared'].includes(S.view) && !S.userSorted) return items;
+  const { key, dir } = S.sort;
+  return [...items].sort((a, b) => {
+    if (a.dir !== b.dir) return a.dir ? -1 : 1;
+    let r = 0;
+    if (key === 'size') r = (a.size || 0) - (b.size || 0);
+    else if (key === 'mtime') r = (a.mtime || 0) - (b.mtime || 0);
+    else r = a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
+    return r * dir || a.name.localeCompare(b.name);
+  });
+}
+function setSort(key) {
+  if (S.sort.key === key) S.sort.dir *= -1; else S.sort = { key, dir: key === 'name' ? 1 : -1 };
+  S.userSorted = true; store.set('sort', S.sort); render();
+}
+
+// ---------- render ----------
+const TITLES = { recent: 'Recent', starred: 'Starred', shared: 'Shared links', trash: 'Trash', storage: 'Storage', search: 'Search results' };
+function render() { renderHead(); renderBody(); renderDetails(); $('#fab').classList.toggle('hidden', S.view !== 'drive'); }
+
+function renderHead() {
+  const head = $('#head'); head.replaceChildren();
+  const sel = selected();
+  {
+    const crumbs = h('div', { class: 'crumbs' });
+    if (S.view === 'drive') {
+      const parts = S.path.split('/').filter(Boolean);
+      const segs = [['My Drive', '/']]; let acc = '';
+      for (const p of parts) { acc += '/' + p; segs.push([p, acc]); }
+      const show = segs.length > 4 ? [segs[0], ['…', null], ...segs.slice(-2)] : segs;
+      show.forEach(([label, path], i) => {
+        if (i) crumbs.append(h('span', { class: 'sep' }, icon('i-cr')));
+        const last = i === show.length - 1;
+        const b = h('button', { class: last ? 'last' : '', title: label, onclick: ev => last ? openMenu(ev.currentTarget, newMenu()) : path && goDir(path) }, label, last ? icon('i-cd') : null);
+        if (path && !last) dropTarget(b, path);
+        crumbs.append(b);
+      });
+    } else if (S.view === 'search') crumbs.append(h('span', { style: 'padding:4px 10px' }, `Results for “${S.q}”`));
+    else crumbs.append(h('span', { style: 'padding:4px 10px' }, TITLES[S.view]));
+    head.append(crumbs);
+  }
+  if (!['storage', 'shared', 'trash'].includes(S.view)) {
+    const tools = h('div', { class: 'tools' });
+    if (S.layout === 'grid') tools.append(h('button', { class: 'btn outline', style: 'padding:6px 12px;font-weight:500', title: 'Sort', onclick: ev => openMenu(ev.currentTarget, sortMenu()) }, { name: 'Name', mtime: 'Modified', size: 'Size' }[S.sort.key], icon(S.sort.dir > 0 ? 'i-up' : 'i-down')));
+    tools.append(h('button', { class: 'iconbtn lay', title: S.layout === 'grid' ? 'List layout' : 'Grid layout', onclick: () => { S.layout = S.layout === 'grid' ? 'list' : 'grid'; store.set('layout', S.layout); render(); } }, icon(S.layout === 'grid' ? 'i-list' : 'i-grid')));
+    tools.append(h('button', { class: 'iconbtn' + (S.details ? ' on' : ''), title: 'View details', onclick: () => toggleDetails() }, icon('i-info')));
+    head.append(tools);
+  }
+  if (!sel.length) {
+    if (!['storage'].includes(S.view)) {
+      const nd = S.items.filter(i => i.dir).length, nf = S.items.length - nd;
+      const parts = [];
+      if (nd) parts.push(`${nd} folder${nd === 1 ? '' : 's'}`);
+      if (nf) parts.push(`${nf} ${S.view === 'shared' ? 'link' : 'file'}${nf === 1 ? '' : 's'}`);
+      head.append(h('div', { class: 'subrow muted' }, S.loading ? 'Loading…' : (parts.join(', ') || 'No items')));
+    }
+  } else {
+    const bar = h('div', { class: 'selbar' },
+      h('button', { class: 'iconbtn', title: 'Clear selection', onclick: () => { S.sel.clear(); refreshSel(); } }, icon('i-x')),
+      h('span', { class: 'count' }, `${sel.length} selected`));
+    for (const a of actionsFor(sel)) if (a.bar) bar.append(h('button', { class: 'iconbtn', title: a.label, onclick: a.run }, icon(a.icon)));
+    bar.append(h('button', { class: 'iconbtn', title: 'More actions', onclick: ev => openMenu(ev.currentTarget, actionsFor(sel)) }, icon('i-more')));
+    head.append(bar);
+  }
+}
+
+function sortMenu() {
+  const mk = (key, label) => ({ label, icon: S.sort.key === key ? 'i-check' : null, run: () => setSort(key) });
+  return [mk('name', 'Name'), mk('mtime', 'Last modified'), mk('size', 'File size'), '-', { label: S.sort.dir > 0 ? 'Descending' : 'Ascending', icon: 'i-sortdir', run: () => { S.sort.dir *= -1; S.userSorted = true; store.set('sort', S.sort); render(); } }];
+}
+
+function emptyState(title, text) {
+  return h('div', { class: 'empty' }, icon('i-empty', 'i big'), h('h3', {}, title), h('div', {}, text));
+}
+
+function renderBody() {
+  const box = $('#scroll'); box.replaceChildren();
+  if (S.loading && !S.items.length && S.view !== 'storage') { box.append(h('div', { class: 'empty' }, 'Loading…')); return; }
+  if (S.view === 'storage') return renderStorage(box);
+  if (S.view === 'trash') box.append(h('div', { class: 'banner' }, icon('i-info'), 'Items in Trash are deleted forever after 30 days', S.items.length ? h('button', { class: 'btn text', onclick: emptyTrash }, 'Empty trash') : null));
+  const items = sorted(S.items);
+  if (!items.length) {
+    const E = {
+      drive: S.path === '/' ? ['Welcome to MyDrive', 'Drag files here, or use the “New” button to upload.'] : ['This folder is empty', 'Drag files here, or use the “New” button.'],
+      recent: ['No recent files', 'Files you upload or change show up here.'], starred: ['No starred files', 'Add stars to things you want to find easily later.'],
+      shared: ['No shared links', 'Share a file or folder to get a link anyone can open.'], trash: ['Trash is empty', 'Items moved to Trash will be deleted forever after 30 days.'],
+      search: ['No results', 'Try a different word or part of a file name.']
+    }[S.view];
+    box.append(emptyState(...E)); return;
+  }
+  if (S.view === 'shared') return renderShared(box, items);
+  if (S.layout === 'grid' && S.view !== 'trash') renderGrid(box, items); else renderList(box, items);
+}
+
+function bindItem(el, it) {
+  const k = keyOf(it);
+  el.dataset.key = k;
+  if (S.sel.has(k)) el.classList.add('sel-item');
+  el.addEventListener('click', ev => { if (ev.target.closest('.mini,.rowacts')) return; isTouch && !ev.ctrlKey && !S.sel.size ? openItem(it) : clickSelect(ev, it); });
+  el.addEventListener('dblclick', ev => { if (ev.target.closest('.mini,.rowacts')) return; openItem(it); });
+  el.addEventListener('contextmenu', ev => { ev.preventDefault(); if (!S.sel.has(k)) { S.sel = new Set([k]); S.anchor = k; refreshSel(); } openMenu({ x: ev.clientX, y: ev.clientY }, actionsFor(selected())); });
+  if (S.view !== 'trash') {
+    el.draggable = true;
+    el.addEventListener('dragstart', ev => {
+      if (!S.sel.has(k)) { S.sel = new Set([k]); refreshSel(); }
+      const paths = selected().map(x => x.path);
+      ev.dataTransfer.setData('application/x-mydrive', JSON.stringify(paths));
+      ev.dataTransfer.effectAllowed = 'move';
+    });
+    if (it.dir) dropTarget(el, it.path);
+  }
+}
+
+function kebab(it) {
+  return h('button', { class: 'mini', title: 'More actions', onclick: ev => { ev.stopPropagation(); const k = keyOf(it); if (!S.sel.has(k)) { S.sel = new Set([k]); S.anchor = k; refreshSel(); } openMenu(ev.currentTarget, actionsFor(selected())); } }, icon('i-more'));
+}
+
+function renderGrid(box, items) {
+  const folders = items.filter(i => i.dir), files = items.filter(i => !i.dir);
+  if (folders.length) {
+    box.append(h('div', { class: 'section' }, 'Folders'));
+    const g = h('div', { class: 'grid' });
+    for (const it of folders) {
+      const el = h('div', { class: 'ftile', title: it.name }, typeIcon('folder', 24), h('span', { class: 'nm' }, it.name), it.starred ? h('span', { class: 'star-badge' }, icon('i-starf')) : null, kebab(it));
+      bindItem(el, it); g.append(el);
+    }
+    box.append(g);
+  }
+  if (files.length) {
+    box.append(h('div', { class: 'section' }, 'Files'));
+    const g = h('div', { class: 'grid' });
+    for (const it of files) {
+      const th = h('div', { class: 'thumb' });
+      if (it.thumb) {
+        const img = h('img', { loading: 'lazy', alt: '', src: thumbUrl(it) });
+        img.onerror = () => { img.remove(); th.append(typeIcon(it.kind, 64)); };
+        th.append(img);
+      } else th.append(typeIcon(it.kind, 64));
+      const el = h('div', { class: 'card', title: it.name }, h('div', { class: 'top' }, typeIcon(it.kind, 20), h('span', { class: 'nm' }, it.name), it.starred ? h('span', { class: 'star-badge' }, icon('i-starf')) : null, kebab(it)), th);
+      bindItem(el, it); g.append(el);
+    }
+    box.append(g);
+  }
+}
+
+function renderList(box, items) {
+  const showLoc = ['recent', 'starred', 'search', 'trash'].includes(S.view);
+  const dateKey = S.view === 'trash' ? 'Date deleted' : 'Last modified';
+  const th = (label, key, cls) => {
+    const active = S.sort.key === key && (S.userSorted || !['recent', 'trash'].includes(S.view));
+    return h('th', { class: cls + (key ? ' sortable' : ''), onclick: key ? () => setSort(key) : null }, label, active ? icon(S.sort.dir > 0 ? 'i-up' : 'i-down', 'i') : null);
+  };
+  const t = h('table', { class: 'table' },
+    h('thead', {}, h('tr', {}, th('Name', 'name', 'c-name'), showLoc ? th(S.view === 'trash' ? 'Original location' : 'Location', null, 'c-loc') : null, th(dateKey, 'mtime', 'c-date'), th('File size', 'size', 'c-size'), h('th', { class: 'c-act' }))));
+  const tb = h('tbody');
+  for (const it of items) {
+    const loc = S.view === 'trash' ? it.from : parentOf(it.path);
+    const acts = h('div', { class: 'rowacts' });
+    const qa = (ic, label, fn) => acts.append(h('button', { class: 'mini', title: label, onclick: ev => { ev.stopPropagation(); fn(); } }, icon(ic)));
+    if (S.view === 'trash') { qa('i-restore', 'Restore', () => restore([it])); qa('i-trash', 'Delete forever', () => purge([it])); }
+    else {
+      qa('i-share', 'Share', () => shareDialog(it));
+      if (!it.dir) qa('i-download', 'Download', () => download([it])); else qa('i-download', 'Download as ZIP', () => download([it]));
+      qa('i-edit', 'Rename', () => renameDialog(it));
+      qa(it.starred ? 'i-starf' : 'i-star', it.starred ? 'Remove from Starred' : 'Add to Starred', () => setStar([it], !it.starred));
+    }
+    acts.append(kebab(it));
+    const tr = h('tr', { class: 'row' },
+      h('td', { class: 'c-name', title: it.name }, h('div', { class: 'namecell' }, typeIcon(it.kind, 22), h('span', { class: 'nm' }, it.name), it.starred && S.view !== 'starred' ? h('span', { class: 'star-badge' }, icon('i-starf')) : null)),
+      showLoc ? h('td', { class: 'c-loc muted', title: loc }, h('button', { class: 'btn text', style: 'padding:4px 8px;font-weight:500', onclick: ev => { ev.stopPropagation(); if (S.view !== 'trash') goDir(loc); } }, typeIcon('folder', 16), locLabel(loc))) : null,
+      h('td', { class: 'c-date muted' }, fmtDate(S.view === 'trash' ? it.deleted : it.mtime)),
+      h('td', { class: 'c-size muted' }, it.dir ? '—' : fmtSize(it.size)),
+      h('td', { class: 'c-act' }, acts));
+    bindItem(tr, it); tb.append(tr);
+  }
+  t.append(tb); box.append(t);
+}
+
+function renderShared(box, items) {
+  const t = h('table', { class: 'table' }, h('thead', {}, h('tr', {}, h('th', { class: 'c-name' }, 'Name'), h('th', { class: 'c-loc' }, 'Location'), h('th', { class: 'c-date' }, 'Link expires'), h('th', { class: 'c-size' }, 'Downloads'), h('th', { class: 'c-act' }))));
+  const tb = h('tbody');
+  for (const s of items) {
+    const tr = h('tr', { class: 'row' },
+      h('td', { class: 'c-name', title: s.path }, h('div', { class: 'namecell' }, typeIcon(s.kind, 22), h('span', { class: 'nm' }, s.name))),
+      h('td', { class: 'c-loc muted' }, h('button', { class: 'btn text', style: 'padding:4px 8px;font-weight:500', onclick: () => goDir(parentOf(s.path)) }, typeIcon('folder', 16), locLabel(parentOf(s.path)))),
+      h('td', { class: 'c-date muted' }, s.expires ? fmtDate(s.expires, true) : 'Never'),
+      h('td', { class: 'c-size muted' }, String(s.downloads)),
+      h('td', { class: 'c-act' }, h('div', { class: 'rowacts', style: 'visibility:visible' },
+        h('button', { class: 'mini', title: 'Copy link', onclick: () => copyLink(location.origin + s.url) }, icon('i-link')),
+        h('button', { class: 'mini', title: 'Open link', onclick: () => window.open(s.url, '_blank', 'noopener') }, icon('i-open')),
+        h('button', { class: 'mini', title: 'Stop sharing', onclick: () => stopSharing(s.id, s.name) }, icon('i-x')))));
+    tb.append(tr);
+  }
+  t.append(tb); box.append(t);
+}
+
+const STOR_COLORS = { 'Photos & images': 'var(--c-image)', Videos: 'var(--c-video)', Audio: 'var(--c-audio)', Documents: 'var(--c-document)', Archives: 'var(--c-archive)', Other: 'var(--c-file)' };
+function renderStorage(box) {
+  const d = S.storage; if (!d) return;
+  const u = d.usage, pct = u.used / u.quota * 100;
+  const wrap = h('div', { class: 'stor' });
+  wrap.append(h('div', { class: 'big' }, `${fmtSize(u.used)} `, h('span', { class: 'muted', style: 'font-size:18px' }, `of ${fmtSize(u.quota)} used`)));
+  wrap.append(h('div', { class: 'muted' }, `${pct.toFixed(1)}% used · ${fmtSize(Math.max(0, u.quota - u.used))} free · ${d.files} files`));
+  const stack = h('div', { class: 'stack' }), legend = h('div', { class: 'legend' });
+  const kinds = Object.entries(d.by_kind).sort((a, b) => b[1] - a[1]);
+  for (const [k, v] of kinds) { stack.append(h('div', { style: `width:${v / u.quota * 100}%;background:${STOR_COLORS[k] || 'var(--c-file)'}`, title: `${k}: ${fmtSize(v)}` })); legend.append(h('span', {}, h('i', { style: `background:${STOR_COLORS[k]}` }), `${k} · ${fmtSize(v)}`)); }
+  if (d.trash) { stack.append(h('div', { style: `width:${d.trash / u.quota * 100}%;background:var(--faint)`, title: 'Trash' })); legend.append(h('span', {}, h('i', { style: 'background:var(--faint)' }), `Trash · ${fmtSize(d.trash)}`)); }
+  wrap.append(stack, legend);
+  if (d.trash) wrap.append(h('div', { class: 'banner' }, icon('i-trash'), `Trash is using ${fmtSize(d.trash)}`, h('button', { class: 'btn text', onclick: emptyTrash }, 'Empty trash')));
+  wrap.append(h('div', { class: 'section', style: 'margin-top:20px' }, 'Largest files'));
+  if (!d.largest.length) wrap.append(h('div', { class: 'muted' }, 'No files yet.'));
+  else {
+    const t = h('table', { class: 'table' }, h('thead', {}, h('tr', {}, h('th', { class: 'c-name' }, 'Name'), h('th', { class: 'c-loc' }, 'Location'), h('th', { class: 'c-size' }, 'Size'))));
+    const tb = h('tbody');
+    for (const f of d.largest) tb.append(h('tr', { class: 'row', ondblclick: () => openPath(f.path), title: f.path },
+      h('td', { class: 'c-name' }, h('div', { class: 'namecell' }, typeIcon(f.kind, 22), h('span', { class: 'nm' }, f.name))),
+      h('td', { class: 'c-loc' }, h('button', { class: 'btn text', style: 'padding:4px 8px;font-weight:500', onclick: () => goDir(parentOf(f.path)) }, typeIcon('folder', 16), locLabel(parentOf(f.path)))),
+      h('td', { class: 'c-size muted' }, fmtSize(f.size))));
+    t.append(tb); wrap.append(t);
+  }
+  box.append(wrap);
+}
+
+// ---------- selection ----------
+function clickSelect(ev, it) {
+  const k = keyOf(it), list = sorted(S.items).map(keyOf);
+  if (ev.shiftKey && S.anchor && list.includes(S.anchor)) {
+    const [a, b] = [list.indexOf(S.anchor), list.indexOf(k)].sort((x, y) => x - y);
+    if (!(ev.ctrlKey || ev.metaKey)) S.sel.clear();
+    list.slice(a, b + 1).forEach(x => S.sel.add(x));
+  } else if (ev.ctrlKey || ev.metaKey || (isTouch && S.sel.size)) {
+    S.sel.has(k) ? S.sel.delete(k) : S.sel.add(k); S.anchor = k;
+  } else { S.sel = new Set([k]); S.anchor = k; }
+  refreshSel();
+}
+$('#scroll').addEventListener('click', ev => { if (ev.target === ev.currentTarget || ev.target.classList.contains('grid') || ev.target.classList.contains('section')) { if (S.sel.size) { S.sel.clear(); refreshSel(); } } });
+$('#scroll').addEventListener('contextmenu', ev => { if (ev.target.closest('.row,.card,.ftile')) return; if (S.view === 'drive') { ev.preventDefault(); openMenu({ x: ev.clientX, y: ev.clientY }, newMenu()); } });
+
+// ---------- actions ----------
+function actionsFor(items) {
+  const one = items.length === 1 ? items[0] : null;
+  if (S.view === 'trash') return [
+    { label: 'Restore', icon: 'i-restore', bar: true, run: () => restore(items) },
+    { label: 'Delete forever', icon: 'i-trash', bar: true, danger: true, run: () => purge(items) }];
+  const allStar = items.every(i => i.starred);
+  const a = [];
+  if (one) a.push({ label: one.dir ? 'Open' : 'Preview', icon: 'i-open', run: () => openItem(one) });
+  a.push({ label: 'Download', icon: 'i-download', bar: true, run: () => download(items) });
+  if (one) a.push({ label: 'Rename', icon: 'i-edit', bar: true, kbd: 'F2', run: () => renameDialog(one) });
+  a.push({ label: 'Make a copy', icon: 'i-copy', run: () => copyItems(items) });
+  a.push('-');
+  if (one) a.push({ label: 'Share', icon: 'i-share', bar: true, run: () => shareDialog(one) });
+  a.push({ label: 'Move to', icon: 'i-move', bar: true, run: () => moveDialog(items, 'move') });
+  a.push({ label: 'Copy to', icon: 'i-copy', run: () => moveDialog(items, 'copy') });
+  a.push({ label: allStar ? 'Remove from Starred' : 'Add to Starred', icon: allStar ? 'i-starf' : 'i-star', bar: true, run: () => setStar(items, !allStar) });
+  if (S.view !== 'drive') a.push({ label: 'Show file location', icon: 'i-move', run: () => goDir(parentOf(items[0].path)) });
+  a.push({ label: 'Details', icon: 'i-info', run: () => { S.details = true; store.set('details', true); render(); } });
+  a.push('-');
+  a.push({ label: 'Move to Trash', icon: 'i-trash', bar: true, kbd: 'Del', run: () => trash(items) });
+  return a;
+}
+
+function newMenu() {
+  return [
+    { label: 'New folder', icon: 'i-newfolder', run: newFolderDialog }, '-',
+    { label: 'File upload', icon: 'i-fileup', run: () => $('#fileIn').click() },
+    { label: 'Folder upload', icon: 'i-folderup', run: () => $('#dirIn').click() }];
+}
+
+function openItem(it) {
+  if (S.view === 'trash') return toast('To open this, restore it from Trash first', { label: 'Restore', run: () => restore([it]) });
+  if (it.dir) return goDir(it.path);
+  openViewer(it);
+}
+async function openPath(p) { goDir(parentOf(p)); }
+
+async function trash(items) {
+  try {
+    const r = await api('POST', '/api/delete', { paths: items.map(i => i.path) });
+    S.sel.clear(); refresh();
+    toast(items.length === 1 ? `“${items[0].name}” moved to Trash` : `${items.length} items moved to Trash`, { label: 'Undo', run: async () => { await api('POST', '/api/trash/restore', { ids: r.ids }).catch(oops); refresh(); } });
+  } catch (e) { oops(e); }
+}
+async function restore(items) {
+  try { await api('POST', '/api/trash/restore', { ids: items.map(i => i.id) }); S.sel.clear(); refresh(); toast(items.length === 1 ? `“${items[0].name}” restored` : `${items.length} items restored`); } catch (e) { oops(e); }
+}
+async function purge(items) {
+  if (!await confirmDialog('Delete forever?', `${items.length === 1 ? `“${items[0].name}”` : items.length + ' items'} will be deleted forever and you won't be able to restore ${items.length === 1 ? 'it' : 'them'}.`, 'Delete forever')) return;
+  try { await api('POST', '/api/trash/delete', { ids: items.map(i => i.id) }); S.sel.clear(); refresh(); toast('Deleted forever'); } catch (e) { oops(e); }
+}
+async function emptyTrash() {
+  if (!await confirmDialog('Empty trash?', 'All items in Trash will be deleted forever and you won\'t be able to restore them.', 'Empty trash')) return;
+  try { await api('POST', '/api/trash/empty'); refresh(); toast('Trash emptied'); } catch (e) { oops(e); }
+}
+async function setStar(items, on) {
+  try { await api('POST', '/api/star', { paths: items.map(i => i.path), on }); items.forEach(i => i.starred = on); if (S.view === 'starred' && !on) refresh(); else render(); toast(on ? 'Added to Starred' : 'Removed from Starred'); } catch (e) { oops(e); }
+}
+async function copyItems(items) {
+  try { await api('POST', '/api/copy', { paths: items.map(i => i.path) }); refresh(); toast(items.length === 1 ? `Made a copy of “${items[0].name}”` : `Copied ${items.length} items`); } catch (e) { oops(e); }
+}
+function download(items) {
+  const url = items.length === 1 && !items[0].dir ? fileUrl(items[0].path, true) : '/api/zip?paths=' + enc(JSON.stringify(items.map(i => i.path)));
+  const a = h('a', { href: url }); document.body.append(a); a.click(); a.remove();
+  if (url.includes('/api/zip')) toast('Preparing ZIP download…');
+}
+async function moveTo(paths, dest) {
+  try { const r = await api('POST', '/api/move', { paths, dest }); S.sel.clear(); refresh(); if (r.moved) toast(`Moved ${r.moved === 1 ? '1 item' : r.moved + ' items'} to “${locLabel(dest)}”`, { label: 'Open folder', run: () => goDir(dest) }); } catch (e) { oops(e); }
+}
+async function copyLink(url) {
+  try { await navigator.clipboard.writeText(url); toast('Link copied'); }
+  catch { const t = h('textarea', { value: url }); document.body.append(t); t.select(); try { document.execCommand('copy'); toast('Link copied'); } catch { prompt('Copy this link', url); } t.remove(); }
+}
+async function stopSharing(id, name) {
+  try { await api('POST', '/api/share/revoke', { id }); toast(`Stopped sharing “${name}”`); if (S.view === 'shared') refresh(); else render(); } catch (e) { oops(e); }
+}
+
+// ---------- menus ----------
+let menuEl = null;
+function closeMenu() { if (menuEl) { menuEl.remove(); menuEl = null; } }
+function openMenu(anchor, items) {
+  closeMenu();
+  const m = h('div', { class: 'menu', role: 'menu' });
+  for (const it of items) {
+    if (it === '-') { m.append(h('hr')); continue; }
+    m.append(h('button', { class: it.danger ? 'danger' : '', onclick: () => { closeMenu(); it.run(); } }, it.icon ? icon(it.icon) : h('span', { style: 'width:20px' }), it.label, it.kbd ? h('span', { class: 'kbd' }, it.kbd) : null));
+  }
+  document.body.append(m); menuEl = m;
+  let x, y;
+  if (anchor.getBoundingClientRect) { const r = anchor.getBoundingClientRect(); x = r.left; y = r.bottom + 4; } else ({ x, y } = anchor);
+  const mw = m.offsetWidth, mh = m.offsetHeight;
+  x = Math.max(8, Math.min(x, innerWidth - mw - 8));
+  if (y + mh > innerHeight - 8) y = Math.max(8, (anchor.getBoundingClientRect ? anchor.getBoundingClientRect().top - mh - 4 : y - mh));
+  m.style.left = x + 'px'; m.style.top = y + 'px';
+}
+addEventListener('mousedown', ev => { if (menuEl && !menuEl.contains(ev.target)) closeMenu(); }, true);
+addEventListener('resize', closeMenu);
+$('#scroll').addEventListener('scroll', closeMenu);
+
+// ---------- dialogs ----------
+function dialog({ title, body, actions, onOpen, wide }) {
+  return new Promise(resolve => {
+    const prevFocus = document.activeElement;
+    const close = v => { bd.remove(); document.removeEventListener('keydown', onKey, true); prevFocus?.focus?.(); resolve(v); };
+    const acts = h('div', { class: 'acts' });
+    for (const a of actions) acts.append(h('button', { class: 'btn ' + (a.kind || 'text'), type: a.submit ? 'submit' : 'button', onclick: async () => { if (a.submit) return; if ('value' in a) return close(a.value); const v = a.run ? await a.run() : undefined; if (v !== false) close(v); } }, a.label));
+    const form = h('form', { class: 'dlg', style: wide ? 'max-width:560px' : '', onsubmit: async ev => { ev.preventDefault(); const sub = actions.find(a => a.submit); if (!sub) return; const v = sub.run ? await sub.run() : sub.value; if (v !== false) close(v); } }, h('h2', {}, title), h('div', { class: 'body' }, body), acts);
+    const bd = h('div', { class: 'backdrop', onmousedown: ev => { if (ev.target === bd) close(null); } }, form);
+    const onKey = ev => { if (ev.key === 'Escape') { ev.stopPropagation(); close(null); } };
+    document.addEventListener('keydown', onKey, true);
+    document.body.append(bd);
+    onOpen ? onOpen(form, close) : form.querySelector('input,button.primary')?.focus();
+  });
+}
+function confirmDialog(title, text, okLabel) {
+  return dialog({ title, body: h('div', { class: 'muted' }, text), actions: [{ label: 'Cancel', value: false }, { label: okLabel, kind: 'danger', value: true }] });
+}
+function inputDialog(title, value, okLabel, selectStem) {
+  const inp = h('input', { class: 'field', value, spellcheck: false });
+  return dialog({
+    title, body: inp, actions: [{ label: 'Cancel', value: null }, { label: okLabel, kind: 'primary', submit: true, run: () => inp.value.trim() || false }],
+    onOpen: () => { inp.focus(); const dot = value.lastIndexOf('.'); if (selectStem && dot > 0) inp.setSelectionRange(0, dot); else inp.select(); }
+  });
+}
+async function newFolderDialog() {
+  const n = await inputDialog('New folder', 'Untitled folder', 'Create');
+  if (!n) return;
+  try { await api('POST', '/api/mkdir', { path: joinPath(S.path, n) }); refresh(); } catch (e) { oops(e); }
+}
+async function renameDialog(it) {
+  const n = await inputDialog('Rename', it.name, 'OK', !it.dir);
+  if (!n || n === it.name) return;
+  try { await api('POST', '/api/rename', { path: it.path, name: n }); refresh(); } catch (e) { oops(e); }
+}
+
+async function shareDialog(it) {
+  let info; try { info = await api('GET', '/api/info?path=' + enc(it.path)); } catch (e) { return oops(e); }
+  const body = h('div', { style: 'display:flex;flex-direction:column;gap:14px' });
+  const draw = () => {
+    body.replaceChildren();
+    const s = info.share;
+    body.append(h('div', { class: 'namecell' }, typeIcon(it.kind, 28), h('span', { class: 'nm' }, it.name)));
+    if (!s) {
+      const sel = h('select', { class: 'field' }, ...[['1', '1 day'], ['7', '7 days'], ['30', '30 days'], ['0', 'Never expires']].map(([v, l]) => h('option', { value: v, selected: v === '7' }, l)));
+      body.append(h('div', { class: 'muted' }, 'Anyone with the link can ' + (it.dir ? 'view and download everything in this folder.' : 'view and download this file.')),
+        h('label', { style: 'display:flex;flex-direction:column;gap:6px' }, h('span', { class: 'muted' }, 'Link expires after'), sel),
+        h('button', { type: 'button', class: 'btn primary', style: 'align-self:flex-start', onclick: async () => { try { const r = await api('POST', '/api/share', { path: it.path, days: +sel.value }); info.share = { id: r.id, url: r.url, expires: r.expires }; draw(); copyLink(location.origin + r.url); render(); } catch (e) { oops(e); } } }, icon('i-link'), 'Create link'));
+    } else {
+      const url = location.origin + s.url;
+      body.append(h('div', { class: 'muted' }, h('b', { style: 'color:var(--text)' }, 'Anyone with the link'), ' can view and download. ', s.expires ? `Expires ${fmtDate(s.expires, true)}.` : 'Never expires.'),
+        h('div', { class: 'linkbox' }, h('input', { value: url, readOnly: true, onfocus: e => e.target.select() }), h('button', { type: 'button', class: 'btn primary', onclick: () => copyLink(url) }, 'Copy link')),
+        h('button', { type: 'button', class: 'btn text', style: 'align-self:flex-start;color:var(--danger)', onclick: async () => { await stopSharing(s.id, it.name); info.share = null; draw(); } }, 'Stop sharing'));
+    }
+  };
+  draw();
+  dialog({ title: `Share “${it.name}”`, body, actions: [{ label: 'Done', kind: 'primary', value: true }], onOpen: () => {} });
+}
+
+async function moveDialog(items, mode) {
+  const paths = items.map(i => i.path);
+  let at = S.view === 'drive' ? S.path : '/';
+  const list = h('div', { class: 'pl' }), header = h('div', { class: 'ph' });
+  const blocked = p => paths.some(x => p === x || p.startsWith(x + '/'));
+  async function draw() {
+    header.replaceChildren(
+      at !== '/' ? h('button', { type: 'button', class: 'iconbtn', title: 'Back', onclick: () => { at = parentOf(at); draw(); } }, icon('i-back')) : h('span', { style: 'width:8px' }),
+      h('span', { style: 'flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' }, locLabel(at)),
+      h('button', { type: 'button', class: 'iconbtn', title: 'New folder', onclick: async () => { const n = await inputDialog('New folder', 'Untitled folder', 'Create'); if (!n) return; try { await api('POST', '/api/mkdir', { path: joinPath(at, n) }); at = joinPath(at, n); draw(); } catch (e) { oops(e); } } }, icon('i-newfolder')));
+    list.replaceChildren(h('div', { class: 'muted', style: 'padding:14px' }, 'Loading…'));
+    try {
+      const d = await api('GET', '/api/list?path=' + enc(at));
+      const dirs = d.entries.filter(e => e.dir);
+      list.replaceChildren();
+      if (!dirs.length) list.append(h('div', { class: 'muted', style: 'padding:14px' }, 'No folders here.'));
+      for (const e of dirs) {
+        const dis = blocked(e.path);
+        list.append(h('div', { class: 'pi' + (dis ? ' dis' : ''), onclick: () => { if (!dis) { at = e.path; draw(); } } }, typeIcon('folder', 22), h('span', { style: 'flex:1' }, e.name), dis ? null : icon('i-cr')));
+      }
+    } catch (e) { list.replaceChildren(h('div', { class: 'err', style: 'padding:14px' }, e.message)); }
+  }
+  draw();
+  const dest = await dialog({
+    title: (mode === 'move' ? 'Move ' : 'Copy ') + (items.length === 1 ? `“${items[0].name}”` : `${items.length} items`),
+    body: h('div', { class: 'picker' }, header, list), wide: true,
+    actions: [{ label: 'Cancel', value: null }, { label: mode === 'move' ? 'Move here' : 'Copy here', kind: 'primary', run: () => blocked(at) ? (toast("Can't put a folder inside itself"), false) : at }]
+  });
+  if (dest == null) return;
+  if (mode === 'move') moveTo(paths, dest);
+  else { try { await api('POST', '/api/copy', { paths, dest }); refresh(); toast(`Copied to “${locLabel(dest)}”`, { label: 'Open folder', run: () => goDir(dest) }); } catch (e) { oops(e); } }
+}
+
+function helpDialog() {
+  const dav = location.origin + '/dav';
+  dialog({
+    title: 'Use MyDrive as a drive on your PC', wide: true,
+    body: h('div', { style: 'display:flex;flex-direction:column;gap:12px' },
+      h('div', { class: 'muted' }, 'Your files appear in File Explorer like a normal drive letter — open, save, drag and drop.'),
+      h('b', {}, 'Windows'),
+      h('ol', { class: 'steps' },
+        h('li', {}, 'Open ', h('b', {}, 'File Explorer'), ', right-click ', h('b', {}, 'This PC'), ' → ', h('b', {}, 'Map network drive…')),
+        h('li', {}, 'Pick a drive letter, then paste this as the Folder:', h('div', { class: 'linkbox', style: 'margin-top:6px' }, h('input', { value: dav, readOnly: true }), h('button', { type: 'button', class: 'btn primary', onclick: () => copyLink(dav) }, 'Copy'))),
+        h('li', {}, 'Tick ', h('b', {}, 'Reconnect at sign-in'), ' and ', h('b', {}, 'Connect using different credentials'), ', click Finish, then sign in as ', h('span', { class: 'code' }, 'sreekar'), ' with your MyDrive password.')),
+      h('div', { class: 'muted' }, 'Tip: Windows limits single files to 50 MB on mapped drives unless you raise its limit (see START-HERE in your OCI folder). For big files, upload here in the browser.'),
+      h('b', {}, 'Mac'),
+      h('div', { class: 'muted' }, 'Finder → Go → Connect to Server… → paste the same address.')),
+    actions: [{ label: 'Close', kind: 'primary', value: true }]
+  });
+}
+
+// ---------- details panel ----------
+function toggleDetails() { S.details = !S.details; store.set('details', S.details); render(); }
+let detailsReq = 0;
+async function renderDetails() {
+  const d = $('#details');
+  const show = S.details && !['storage', 'shared'].includes(S.view);
+  d.classList.toggle('hidden', !show);
+  if (!show) return;
+  const sel = selected();
+  const head = (title, ic) => h('div', { class: 'dh' }, ic, h('span', { class: 'nm', title }, title), h('button', { class: 'iconbtn', title: 'Close', onclick: () => toggleDetails() }, icon('i-x')));
+  if (sel.length !== 1) {
+    d.replaceChildren(head(sel.length ? `${sel.length} items selected` : (S.view === 'drive' ? locLabel(S.path) : TITLES[S.view]), typeIcon('folder', 24)),
+      h('div', { class: 'empty', style: 'padding:40px 20px' }, icon('i-info', 'i big'), h('div', {}, sel.length ? 'Select a single item to see its details.' : 'Select a file or folder to see its details.')));
+    return;
+  }
+  const it = sel[0], my = ++detailsReq;
+  const pv = h('div', { class: 'pv' });
+  if (it.thumb && S.view !== 'trash') pv.append(h('img', { src: thumbUrl(it), alt: '' })); else pv.append(typeIcon(it.kind, 72));
+  const dl = h('dl');
+  const row = (k, v) => dl.append(h('dt', {}, k), h('dd', {}, v));
+  d.replaceChildren(head(it.name, typeIcon(it.kind, 24)), pv, dl);
+  row('Type', KIND_LABEL[it.kind] || 'File');
+  if (S.view === 'trash') { row('Size', fmtSize(it.size)); row('Original location', it.from); row('Deleted', fmtDate(it.deleted, true)); return; }
+  row('Size', it.dir ? '…' : fmtSize(it.size));
+  row('Location', h('button', { class: 'btn text', style: 'padding:2px 6px', onclick: () => goDir(parentOf(it.path)) }, locLabel(parentOf(it.path))));
+  row('Modified', fmtDate(it.mtime, true));
+  try {
+    const info = await api('GET', '/api/info?path=' + enc(it.path));
+    if (my !== detailsReq) return;
+    dl.replaceChildren(); row('Type', KIND_LABEL[it.kind] || 'File');
+    row('Size', fmtSize(info.size) + (it.dir ? ` · ${info.items} item${info.items === 1 ? '' : 's'} inside` : ''));
+    row('Location', h('button', { class: 'btn text', style: 'padding:2px 6px', onclick: () => goDir(parentOf(it.path)) }, locLabel(parentOf(it.path))));
+    row('Modified', fmtDate(info.mtime, true));
+    if (info.created) row('Created', fmtDate(info.created, true));
+    row('Starred', info.starred ? 'Yes' : 'No');
+    row('Sharing', info.share ? h('span', {}, 'Anyone with the link · ', h('button', { class: 'btn text', style: 'padding:2px 6px', onclick: () => shareDialog(it) }, 'Manage')) : h('button', { class: 'btn text', style: 'padding:2px 6px', onclick: () => shareDialog(it) }, 'Share'));
+  } catch { }
+}
+
+// ---------- viewer ----------
+let viewer = null;
+function openViewer(it) {
+  const files = sorted(S.items).filter(i => !i.dir);
+  let idx = Math.max(0, files.findIndex(f => f.path === it.path));
+  const v = h('div', { id: 'viewer' });
+  const close = () => { v.remove(); viewer = null; document.removeEventListener('keydown', onKey, true); };
+  const onKey = ev => { if (ev.key === 'Escape') { ev.stopPropagation(); close(); } else if (ev.key === 'ArrowRight') step(1); else if (ev.key === 'ArrowLeft') step(-1); };
+  const step = d => { if (files.length > 1) { idx = (idx + d + files.length) % files.length; draw(); } };
+  async function draw() {
+    const f = files[idx];
+    v.replaceChildren();
+    v.append(h('div', { class: 'vh' },
+      h('button', { class: 'iconbtn', title: 'Close', onclick: close }, icon('i-back')),
+      h('div', { class: 'nm' }, typeIcon(f.kind, 22), h('span', {}, f.name)),
+      h('button', { class: 'iconbtn', title: 'Open in new tab', onclick: () => window.open(fileUrl(f.path), '_blank', 'noopener') }, icon('i-open')),
+      h('button', { class: 'iconbtn', title: 'Download', onclick: () => download([f]) }, icon('i-download')),
+      h('button', { class: 'iconbtn', title: 'Share', onclick: () => shareDialog(f) }, icon('i-share')),
+      h('button', { class: 'iconbtn', title: 'Close', onclick: close }, icon('i-x'))));
+    const body = h('div', { class: 'vb', onclick: ev => { if (ev.target === body) close(); } });
+    const src = fileUrl(f.path);
+    const ext = f.name.split('.').pop().toLowerCase();
+    if (f.kind === 'image' && !['heic', 'heif', 'tif', 'tiff'].includes(ext)) body.append(h('img', { src, alt: f.name }));
+    else if (f.kind === 'video') body.append(h('video', { src, controls: true, autoplay: true }));
+    else if (f.kind === 'audio') body.append(h('audio', { src, controls: true, autoplay: true }));
+    else if (f.kind === 'pdf') body.append(h('iframe', { src, title: f.name }));
+    else if ((f.kind === 'code' || ['txt', 'md', 'csv', 'log', 'tsv', 'ini', 'conf'].includes(ext)) && f.size < 2e6) {
+      const pre = h('pre', {}, 'Loading…'); body.append(pre);
+      fetch(src).then(r => r.text()).then(t => pre.textContent = t).catch(() => pre.textContent = 'Could not load this file.');
+    } else body.append(h('div', { class: 'noprev' }, typeIcon(f.kind, 64), h('div', { style: 'font-size:17px' }, 'No preview available'), h('div', { style: 'color:#aab1bd' }, `${KIND_LABEL[f.kind] || 'File'} · ${fmtSize(f.size)}`), h('button', { class: 'btn primary', onclick: () => download([f]) }, icon('i-download'), 'Download')));
+    if (files.length > 1) {
+      body.append(h('button', { class: 'nav-arrow', style: 'left:12px', title: 'Previous', onclick: () => step(-1) }, icon('i-cl')));
+      body.append(h('button', { class: 'nav-arrow', style: 'right:12px', title: 'Next', onclick: () => step(1) }, icon('i-cr')));
+    }
+    v.append(body);
+  }
+  document.addEventListener('keydown', onKey, true);
+  document.body.append(v); viewer = v; draw();
+}
+
+// ---------- uploads ----------
+const U = { queue: [], active: 0, total: 0, done: 0, failed: 0, bytes: 0, sent: 0, min: false };
+$('#fileIn').onchange = e => { startUpload([...e.target.files].map(f => [f, f.name])); e.target.value = ''; };
+$('#dirIn').onchange = e => { startUpload([...e.target.files].map(f => [f, f.webkitRelativePath || f.name])); e.target.value = ''; };
+$('#upClose').onclick = () => { if (U.active || U.queue.length) { if (!confirm('Cancel the remaining uploads?')) return; U.queue.forEach(j => j.cancel()); U.queue = []; } $('#up').classList.add('hidden'); $('#upList').replaceChildren(); Object.assign(U, { total: 0, done: 0, failed: 0, bytes: 0, sent: 0 }); };
+$('#upMin').onclick = () => { U.min = !U.min; $('#upList').classList.toggle('hidden', U.min); $('#upSub').classList.toggle('hidden', U.min); $('#upMin').firstChild.firstChild.setAttribute('href', U.min ? '#i-up' : '#i-cd'); };
+
+async function startUpload(pairs) {
+  if (!pairs.length) return;
+  if (S.view !== 'drive') return toast('Open a folder in My Drive to upload');
+  const dest = S.path;
+  const existing = new Set(S.items.filter(i => !i.dir).map(i => i.name));
+  const clash = pairs.filter(([, rel]) => !rel.includes('/') && existing.has(rel));
+  let mode = 'keep';
+  if (clash.length) {
+    const r = await dialog({
+      title: 'Upload options', body: h('div', { class: 'muted' }, clash.length === 1 ? `“${clash[0][1]}” already exists in this location. Do you want to replace it with the new file?` : `${clash.length} items already exist in this location. Do you want to replace them with the new files?`, h('div', { style: 'margin-top:8px' }, 'Replaced files are kept in Trash for 30 days.')),
+      actions: [{ label: 'Cancel', value: null }, { label: 'Keep all items', kind: 'outline', value: 'keep' }, { label: 'Replace existing', kind: 'primary', value: 'replace' }]
+    });
+    if (!r) return; mode = r;
+  }
+  $('#up').classList.remove('hidden');
+  for (const [file, rel] of pairs) {
+    const bar = h('i'), st = h('div', { class: 'st' }), why = h('div', { class: 'why' });
+    const row = h('div', { class: 'ui' }, typeIcon(kindFromName(file.name), 24), h('div', { class: 'nm' }, h('div', { title: rel }, rel), h('div', { class: 'bar' }, bar), why), st);
+    const job = { file, path: joinPath(dest, rel), mode, row, bar, st, why, xhr: null, cancelled: false, loaded: 0 };
+    job.cancel = () => { job.cancelled = true; job.xhr?.abort(); };
+    st.append(h('button', { class: 'mini', title: 'Cancel', onclick: () => { job.cancel(); if (!job.xhr) { U.queue = U.queue.filter(j => j !== job); fin(job, false, 'Cancelled'); } } }, icon('i-x')));
+    $('#upList').append(row); U.queue.push(job); U.total++; U.bytes += file.size;
+  }
+  updUp(); pump();
+}
+function kindFromName(n) { const x = n.split('.').pop().toLowerCase(); for (const [k, list] of Object.entries({ image: 'jpg jpeg png gif webp bmp svg heic', video: 'mp4 mov mkv webm avi', audio: 'mp3 wav m4a flac ogg', pdf: 'pdf', document: 'doc docx txt md rtf odt', spreadsheet: 'xls xlsx csv ods', presentation: 'ppt pptx odp', archive: 'zip rar 7z tar gz', code: 'js ts py rs java c cpp go html css json sql sh' })) if (list.split(' ').includes(x)) return k; return 'file'; }
+function updUp() {
+  const left = U.total - U.done - U.failed;
+  $('#upTitle').textContent = left ? `Uploading ${left} item${left === 1 ? '' : 's'}` : `${U.done} upload${U.done === 1 ? '' : 's'} complete` + (U.failed ? ` · ${U.failed} failed` : '');
+  const pct = U.bytes ? Math.round(U.sent / U.bytes * 100) : 100;
+  $('#upSub').replaceChildren(h('span', {}, left ? `${pct}% · ${fmtSize(U.sent)} of ${fmtSize(U.bytes)}` : 'All done'), h('span', {}, U.speed && left ? `${fmtSize(U.speed)}/s` : ''));
+}
+function fin(job, ok, msg) {
+  job.st.replaceChildren(icon(ok ? 'i-check' : 'i-x'));
+  job.row.classList.add(ok ? 'ok' : 'bad');
+  if (!ok) { job.why.textContent = msg; U.failed++; } else { U.done++; job.bar.style.width = '100%'; }
+  updUp();
+}
+function pump() {
+  while (U.active < 2 && U.queue.length) {
+    const job = U.queue.shift(); U.active++;
+    const xhr = new XMLHttpRequest(); job.xhr = xhr;
+    xhr.open('PUT', '/api/upload?path=' + enc(job.path) + '&mode=' + job.mode);
+    xhr.setRequestHeader('X-MyDrive', '1');
+    let last = performance.now(), lastBytes = 0;
+    xhr.upload.onprogress = ev => {
+      if (!ev.lengthComputable) return;
+      U.sent += ev.loaded - job.loaded; job.loaded = ev.loaded;
+      job.bar.style.width = (ev.loaded / ev.total * 100) + '%';
+      const t = performance.now(); if (t - last > 800) { U.speed = (ev.loaded - lastBytes) / ((t - last) / 1000); last = t; lastBytes = ev.loaded; }
+      updUp();
+    };
+    const done = (ok, msg) => { U.active--; if (!ok) U.sent -= job.loaded; fin(job, ok, msg); if (!U.active && !U.queue.length) refresh(); pump(); };
+    xhr.onload = () => { if (xhr.status === 401) showLogin(); if (xhr.status < 300) done(true); else { let m = 'Upload failed'; try { m = JSON.parse(xhr.responseText).error; } catch {} done(false, m); } };
+    xhr.onerror = () => done(false, 'Connection lost');
+    xhr.onabort = () => done(false, 'Cancelled');
+    if (job.cancelled) { U.active--; fin(job, false, 'Cancelled'); continue; }
+    xhr.send(job.file);
+  }
+}
+
+// drag & drop from the computer, and moving items onto folders
+let dragDepth = 0;
+const internalDrag = ev => ev.dataTransfer?.types.includes('application/x-mydrive');
+addEventListener('dragenter', ev => { if (internalDrag(ev) || !ev.dataTransfer?.types.includes('Files') || $('#app').classList.contains('hidden')) return; dragDepth++; $('#dropText').textContent = S.view === 'drive' ? `Drop files to upload them to “${locLabel(S.path)}”` : 'Open a folder in My Drive to upload'; $('#dropzone').classList.remove('hidden'); });
+addEventListener('dragleave', ev => { if (internalDrag(ev)) return; if (--dragDepth <= 0) { dragDepth = 0; $('#dropzone').classList.add('hidden'); } });
+addEventListener('dragover', ev => ev.preventDefault());
+addEventListener('drop', async ev => {
+  ev.preventDefault(); dragDepth = 0; $('#dropzone').classList.add('hidden');
+  if (internalDrag(ev) || $('#app').classList.contains('hidden')) return;
+  const entries = [...(ev.dataTransfer.items || [])].map(i => i.webkitGetAsEntry?.()).filter(Boolean);
+  if (!entries.length) return startUpload([...ev.dataTransfer.files].map(f => [f, f.name]));
+  const out = [];
+  async function walk(entry, prefix) {
+    if (entry.isFile) out.push([await new Promise((res, rej) => entry.file(res, rej)), prefix + entry.name]);
+    else if (entry.isDirectory) { const r = entry.createReader(); let batch; do { batch = await new Promise((res, rej) => r.readEntries(res, rej)); for (const c of batch) await walk(c, prefix + entry.name + '/'); } while (batch.length); }
+  }
+  for (const e of entries) await walk(e, '');
+  startUpload(out);
+});
+function dropTarget(el, path) {
+  el.addEventListener('dragover', ev => { if (!internalDrag(ev)) return; ev.preventDefault(); ev.stopPropagation(); el.classList.add(el.classList.contains('nav') || el.tagName === 'BUTTON' ? 'drop' : 'drop-target'); });
+  el.addEventListener('dragleave', () => el.classList.remove('drop', 'drop-target'));
+  el.addEventListener('drop', ev => { if (!internalDrag(ev)) return; ev.preventDefault(); ev.stopPropagation(); el.classList.remove('drop', 'drop-target'); const paths = JSON.parse(ev.dataTransfer.getData('application/x-mydrive')).filter(p => p !== path); if (paths.length) moveTo(paths, path); });
+}
+dropTarget(document.querySelector('.nav[data-view="drive"]'), '/');
+
+// ---------- chrome ----------
+document.querySelectorAll('.nav').forEach(n => n.addEventListener('click', () => go(n.dataset.view)));
+$('#brand').onclick = () => go('drive');
+$('#newBtn').onclick = ev => { if (S.view !== 'drive') go('drive'); openMenu(ev.currentTarget, newMenu()); };
+$('#fab').onclick = ev => openMenu({ x: innerWidth - 250, y: innerHeight - 200 }, newMenu());
+$('#helpBtn').onclick = helpDialog;
+$('#avatar').onclick = ev => openMenu(ev.currentTarget, [{ label: 'Signed in as sreekar', icon: 'i-check', run: () => {} }, '-', { label: 'Use as a drive on your PC', icon: 'i-pc', run: helpDialog }, { label: 'Storage', icon: 'i-cloud', run: () => go('storage') }, '-', { label: 'Sign out', icon: 'i-logout', run: async () => { await api('POST', '/api/logout').catch(() => {}); showLogin(); } }]);
+$('#searchForm').onsubmit = ev => { ev.preventDefault(); const q = $('#q').value.trim(); if (q) go('search', q); };
+$('#q').oninput = () => $('#qClear').classList.toggle('hidden', !$('#q').value);
+$('#qClear').onclick = () => { $('#q').value = ''; $('#qClear').classList.add('hidden'); if (S.view === 'search') go('drive'); };
+let scrim = null;
+function closeSide() { $('#side').classList.remove('open'); scrim?.remove(); scrim = null; }
+$('#menuBtn').onclick = () => { $('#side').classList.add('open'); scrim = h('div', { id: 'scrim', onclick: closeSide }); document.body.append(scrim); };
+
+// keyboard shortcuts
+document.addEventListener('keydown', ev => {
+  if ($('#app').classList.contains('hidden') || viewer || document.querySelector('.backdrop')) return;
+  const typing = ev.target.matches('input,textarea,select');
+  if (ev.key === '/' && !typing) { ev.preventDefault(); $('#q').focus(); return; }
+  if (typing) return;
+  const sel = selected();
+  if (ev.key === 'Escape') { closeMenu(); if (S.sel.size) { S.sel.clear(); refreshSel(); } }
+  else if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'a') { ev.preventDefault(); S.sel = new Set(S.items.map(keyOf)); refreshSel(); }
+  else if ((ev.key === 'Delete' || ev.key === 'Backspace') && sel.length) { ev.preventDefault(); S.view === 'trash' ? purge(sel) : trash(sel); }
+  else if (ev.key === 'F2' && sel.length === 1 && S.view !== 'trash') { ev.preventDefault(); renameDialog(sel[0]); }
+  else if (ev.key === 'Enter' && sel.length === 1) openItem(sel[0]);
+  else if (ev.key.toLowerCase() === 'i' && ev.altKey) toggleDetails();
+});
+
+// ---------- auth ----------
+function showLogin() { $('#app').classList.add('hidden'); $('#login').classList.remove('hidden'); setTimeout(() => $('#lp').focus(), 50); }
+function showApp() { $('#login').classList.add('hidden'); $('#app').classList.remove('hidden'); }
+$('#loginForm').onsubmit = async ev => {
+  ev.preventDefault(); $('#lerr').textContent = '';
+  try { await api('POST', '/api/login', { user: $('#lu').value, password: $('#lp').value }); $('#lp').value = ''; showApp(); route(); }
+  catch (e) { $('#lerr').textContent = e.message; }
+};
+api('GET', '/api/me').then(d => { setUsage(d.usage); $('#avatar').textContent = (d.user || 'S')[0].toUpperCase(); showApp(); route(); }).catch(() => {});
+</script>
+</body>
+</html>
